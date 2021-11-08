@@ -5,8 +5,10 @@ on:
     inputs:
       registry:
         required: true
+        type: string
       name:
         required: true
+        type: string
     secrets:
       registry-token:
         required: true
