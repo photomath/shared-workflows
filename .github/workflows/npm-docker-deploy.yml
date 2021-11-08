@@ -1,0 +1,56 @@
+name: 'NPM Dokcer Deploy'
+
+on: 
+  workflow_call:
+    inputs:
+      registry:
+        required: true
+      name:
+        required: true
+    secrets:
+      registry-token:
+        required: true
+      pm-github-token:
+        required: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    # Login against a Docker registry except on PR
+    # https://github.com/docker/login-action
+    - name: Log into registry ${{ inputs.registry }}
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ inputs.registry }}
+        username: _json_key
+        password: ${{ secrets.registry-token }}
+        
+    # Extract metadata (tags, labels) for Docker
+    # https://github.com/docker/metadata-action
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: ${{ inputs.registry }}/${{ inputs.name }}
+        tags: |
+          type=sha
+          
+    # Build and push Docker image with Buildx (don't push on PR)
+    # https://github.com/docker/build-push-action
+    # - name: Build and push Docker image
+    #   uses: docker/build-push-action@v2
+    #   with:
+    #     context: .
+    #     push: ${{ github.event_name != 'pull_request' }}
+    #     tags: ${{ steps.meta.outputs.tags }}
+    #     labels: ${{ steps.meta.outputs.labels }}
+    #     build-args: |
+    #       NPM_TOKEN=${{secrets.pm-github-token}}
